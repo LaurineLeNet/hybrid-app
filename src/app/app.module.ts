@@ -6,7 +6,7 @@ import { UIRouterUpgradeModule } from '@uirouter/angular-hybrid';
 import { StandaloneSampleComponent } from './standalone/standalone-sample/standalone-sample.component';
 import { AppComponent } from './app.component';
 import { UpgradeModule } from '@angular/upgrade/static';
-import { UIRouter } from '@uirouter/core';
+import { APP_BASE_HREF } from '@angular/common';
 
 @NgModule({
   declarations: [AppComponent],
@@ -25,7 +25,7 @@ import { UIRouter } from '@uirouter/core';
     }), // Config globale
     ClModule,
   ],
-  providers: [],
+  providers: [{ provide: APP_BASE_HREF, useValue: '/legacy' }],
 })
 export class AppModule implements DoBootstrap {
   constructor(
@@ -35,18 +35,11 @@ export class AppModule implements DoBootstrap {
 
   ngDoBootstrap(appRef: ApplicationRef) {
     // 1. On démarre D'ABORD AngularJS (crée l'injecteur $injector)
-    this.upgrade.bootstrap(document.body, ['loloApp'], {
-      strictDi: false,
-    });
+    if (!this.upgrade.$injector) {
+      this.upgrade.bootstrap(document.body, ['loloApp'], { strictDi: false });
+    }
 
     // 2. ENSUITE on démarre le composant Angular (qui a besoin de l'injecteur)
     appRef.bootstrap(AppComponent);
-
-    // 3. LANCER LA SYNCHRONISATION (Crucial !)
-    // Cela permet à Angular et AngularJS de se parler via l'URL
-    const uiRouter = this.injector.get(UIRouter);
-
-    uiRouter.urlService.listen();
-    uiRouter.urlService.sync();
   }
 }
